@@ -1,0 +1,5 @@
+Ticket_ID,Student_Name,Category,Subject,Status,Priority,SLA_Hours,Created_At
+TCK-1001,Alex Johnson,Fee Receipt,Fee Payment Acknowledgment Pending,IN_PROGRESS,HIGH,24,2026-09-24T10:00:00Z
+TCK-1002,Prajwal Gundmi,ID Card Replacement,Lost ID Card Replacement Request,OPEN,MEDIUM,48,2026-09-24T11:30:00Z
+TCK-1003,Rahul Sharma,Certificates,Degree Certificate Bonafide Request,RESOLVED,LOW,72,2026-09-23T14:20:00Z
+TCK-1004,Ananya Patel,Attendance,Attendance Correction for CS101,ESCALATED,URGENT,12,2026-09-22T09:00:00Z
