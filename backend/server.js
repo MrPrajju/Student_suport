@@ -8,10 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded images statically
+// Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Ensure data directory exists
+// Data directory setup
 const dataDir = path.join(__dirname, '../data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -20,26 +20,24 @@ if (!fs.existsSync(dataDir)) {
 const usersFilePath = path.join(dataDir, 'users.json');
 const ticketsFilePath = path.join(dataDir, 'tickets.json');
 
-// Helper to read JSON file
 const readData = (filePath) => {
   if (!fs.existsSync(filePath)) return [];
   const content = fs.readFileSync(filePath, 'utf8');
   return content ? JSON.parse(content) : [];
 };
 
-// Helper to write JSON file
 const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 };
 
-// Configure File Storage for ID Card & Selfie
+// Storage setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
 
-// API: Student Sign-Up
+// Student Sign-Up
 app.post('/api/signup', upload.fields([{ name: 'idCard' }, { name: 'selfie' }]), (req, res) => {
   const { collegeId, fullName, email, phone, password } = req.body;
   const users = readData(usersFilePath);
@@ -53,7 +51,7 @@ app.post('/api/signup', upload.fields([{ name: 'idCard' }, { name: 'selfie' }]),
     fullName,
     email,
     phone,
-    password, // In production, hash password
+    password,
     idCardPath: req.files['idCard'] ? req.files['idCard'][0].filename : '',
     selfiePath: req.files['selfie'] ? req.files['selfie'][0].filename : '',
     registeredAt: new Date().toISOString()
@@ -64,13 +62,13 @@ app.post('/api/signup', upload.fields([{ name: 'idCard' }, { name: 'selfie' }]),
   res.status(201).json({ message: 'Registration successful', user: { collegeId, fullName, email } });
 });
 
-// API: Student/Admin Login
+// Authentication Endpoint
 app.post('/api/login', (req, res) => {
   const { collegeId, password, role } = req.body;
 
   if (role === 'admin') {
     if (collegeId === 'ADMIN' && password === 'admin123') {
-      return res.json({ role: 'admin', name: 'Admin User' });
+      return res.json({ role: 'admin', user: { name: 'System Administrator', collegeId: 'ADMIN' } });
     }
     return res.status(401).json({ error: 'Invalid Admin credentials' });
   }
@@ -85,39 +83,46 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// API: Get Tickets
+// Get Tickets
 app.get('/api/tickets', (req, res) => {
   const tickets = readData(ticketsFilePath);
+  // Sort by created date descending (newest first)
+  tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   res.json(tickets);
 });
 
-// API: Create Ticket
+// Create Complaint Ticket
 app.post('/api/tickets', (req, res) => {
   const tickets = readData(ticketsFilePath);
   const newTicket = {
     ticket_id: `TCK-${1000 + tickets.length + 1}`,
     student_id: req.body.student_id || 'UNKNOWN',
     student_name: req.body.student_name || 'Anonymous',
-    category: req.body.category || 'General',
+    department: req.body.department || 'CSE (HOD)',
     subject: req.body.subject,
-    status: 'OPEN',
+    description: req.body.description || '',
+    status: 'Pending', // Pending, Active Pending, Resolved
     priority: req.body.priority || 'MEDIUM',
-    created_at: new Date().toISOString()
+    remark: 'Awaiting official review',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   tickets.push(newTicket);
   writeData(ticketsFilePath, tickets);
   res.status(201).json(newTicket);
 });
 
-// API: Update Ticket Status (Admin)
+// Update Status & Remark (Admin)
 app.patch('/api/tickets/:id/status', (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, remark } = req.body;
   const tickets = readData(ticketsFilePath);
   const ticket = tickets.find(t => t.ticket_id === id);
 
   if (ticket) {
-    ticket.status = status;
+    if (status) ticket.status = status;
+    if (remark !== undefined) ticket.remark = remark;
+    ticket.updated_at = new Date().toISOString();
     writeData(ticketsFilePath, tickets);
     res.json(ticket);
   } else {
