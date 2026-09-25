@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies & Build React app
         run: |
           cd frontend
-          npm ci
+          npm install
           npm run build
 
       - name: Setup Pages
