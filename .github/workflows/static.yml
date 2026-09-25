@@ -47,12 +47,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+<<<<<<< HEAD
 
 
         - name: Build React App
+=======
+      
+      - name: Build React App
+>>>>>>> 82d8017 (Fix ESLint warnings breaking CI build in static.yml)
         env:
           CI: false
         run: |
           cd frontend
           npm install
+<<<<<<< HEAD
           npm run build
+=======
+          npm run build
+>>>>>>> 82d8017 (Fix ESLint warnings breaking CI build in static.yml)

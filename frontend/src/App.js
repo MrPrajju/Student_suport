@@ -34,7 +34,7 @@ function App() {
 
   // Admin Filtering & Editing
   const [statusTab, setStatusTab] = useState('ALL'); // 'ALL', 'Pending', 'Active Pending', 'Resolved'
-  const [editingRemark, setEditingRemark] = useState({});
+  //const [editingRemark, setEditingRemark] = useState({});
 
   // Camera handling for selfie
   const videoRef = useRef(null);
