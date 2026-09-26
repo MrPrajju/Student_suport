@@ -36,7 +36,6 @@ function App() {
 
   // Admin Filtering & Editing
   const [statusTab, setStatusTab] = useState('ALL'); // 'ALL', 'Pending', 'Active Pending', 'Resolved'
-  //const [editingRemark, setEditingRemark] = useState({});
 
   // Camera handling for selfie
   const videoRef = useRef(null);
@@ -50,7 +49,7 @@ function App() {
   }, [view]);
 
   const fetchTickets = () => {
-    fetch('http://localhost:5000/api/tickets')
+    fetch(`${API_BASE_URL}/api/tickets`)
       .then((res) => res.json())
       .then((data) => setTickets(data))
       .catch((err) => console.error('Error fetching tickets:', err));
@@ -60,7 +59,7 @@ function App() {
     e.preventDefault();
     setLoginError('');
 
-    fetch('http://localhost:5000/api/login', {
+    fetch(`${API_BASE_URL}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ collegeId: loginId, password: loginPassword, role: loginRole })
@@ -127,7 +126,7 @@ function App() {
     if (idCardFile) formData.append('idCard', idCardFile);
     if (selfieFile) formData.append('selfie', selfieFile);
 
-    fetch('http://localhost:5000/api/signup', {
+    fetch(`${API_BASE_URL}/api/signup`, {
       method: 'POST',
       body: formData
     })
@@ -145,7 +144,7 @@ function App() {
 
   const handleCreateTicket = (e) => {
     e.preventDefault();
-    fetch('http://localhost:5000/api/tickets', {
+    fetch(`${API_BASE_URL}/api/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -166,7 +165,7 @@ function App() {
   };
 
   const handleUpdateStatusAndRemark = (ticketId, newStatus, newRemark) => {
-    fetch(`http://localhost:5000/api/tickets/${ticketId}/status`, {
+    fetch(`${API_BASE_URL}/api/tickets/${ticketId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus, remark: newRemark })
