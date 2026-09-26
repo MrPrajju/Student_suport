@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+const API_BASE_URL = 'https://student-support-tickets.onrender.com';
+
 const DEPARTMENTS = [
   'CSE (HOD)',
   'ECE (HOD)',
