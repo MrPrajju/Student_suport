@@ -5,14 +5,22 @@ const path = require('path');
 const multer = require('multer');
 
 const app = express();
+
+// Enable CORS for all incoming cross-origin requests
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
-// Data directory setup
-const dataDir = path.join(__dirname, '../data');
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadsDir));
+
+// Ensure data directory exists inside backend
+const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -22,20 +30,34 @@ const ticketsFilePath = path.join(dataDir, 'tickets.json');
 
 const readData = (filePath) => {
   if (!fs.existsSync(filePath)) return [];
-  const content = fs.readFileSync(filePath, 'utf8');
-  return content ? JSON.parse(content) : [];
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return content ? JSON.parse(content) : [];
+  } catch (err) {
+    console.error(`Error reading ${filePath}:`, err);
+    return [];
+  }
 };
 
 const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error(`Error writing to ${filePath}:`, err);
+  }
 };
 
-// Storage setup
+// Storage setup for Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
+
+// Root Health Check Route
+app.get('/', (req, res) => {
+  res.status(200).send('Student Support API is live and running!');
+});
 
 // Student Sign-Up
 app.post('/api/signup', upload.fields([{ name: 'idCard' }, { name: 'selfie' }]), (req, res) => {
@@ -46,14 +68,17 @@ app.post('/api/signup', upload.fields([{ name: 'idCard' }, { name: 'selfie' }]),
     return res.status(400).json({ error: 'College ID already registered' });
   }
 
+  const idCardFile = req.files && req.files['idCard'] ? req.files['idCard'][0].filename : '';
+  const selfieFile = req.files && req.files['selfie'] ? req.files['selfie'][0].filename : '';
+
   const newUser = {
     collegeId,
     fullName,
     email,
     phone,
     password,
-    idCardPath: req.files['idCard'] ? req.files['idCard'][0].filename : '',
-    selfiePath: req.files['selfie'] ? req.files['selfie'][0].filename : '',
+    idCardPath: idCardFile,
+    selfiePath: selfieFile,
     registeredAt: new Date().toISOString()
   };
 
@@ -101,7 +126,7 @@ app.post('/api/tickets', (req, res) => {
     department: req.body.department || 'CSE (HOD)',
     subject: req.body.subject,
     description: req.body.description || '',
-    status: 'Pending', // Pending, Active Pending, Resolved
+    status: 'Pending',
     priority: req.body.priority || 'MEDIUM',
     remark: 'Awaiting official review',
     created_at: new Date().toISOString(),
